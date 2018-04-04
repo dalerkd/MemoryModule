@@ -13,9 +13,9 @@
 
 typedef int (*addNumberProc)(int, int);
 
-#define DLL_FILE TEXT("..\\SampleDLL\\SampleDLL.dll")
+//#define DLL_FILE TEXT("..\\SampleDLL\\Debug\\SampleDLL.dll")
 
-void LoadFromFile(void)
+void LoadFromFile(TCHAR* filePath)
 {
     addNumberProc addNumber;
     HRSRC resourceInfo;
@@ -23,41 +23,51 @@ void LoadFromFile(void)
     LPVOID resourceData;
     TCHAR buffer[100];
 
-    HINSTANCE handle = LoadLibrary(DLL_FILE);
+	if(nullptr == filePath)
+	{
+		__debugbreak();
+	}
+
+    HINSTANCE handle = LoadLibrary(filePath);
     if (handle == NULL)
     {
 		__debugbreak();
 		return;
     }
 
-    addNumber = (addNumberProc)GetProcAddress(handle, "addNumbers");
+   /* addNumber = (addNumberProc)GetProcAddress(handle, "addNumbers");
     _tprintf(_T("From file: %d\n"), addNumber(1, 2));
 
-    resourceInfo = FindResource(handle, MAKEINTRESOURCE(VS_VERSION_INFO), RT_VERSION);
-    _tprintf(_T("FindResource returned 0x%p\n"), resourceInfo);
+    //resourceInfo = FindResource(handle, MAKEINTRESOURCE(VS_VERSION_INFO), RT_VERSION);
+    //_tprintf(_T("FindResource returned 0x%p\n"), resourceInfo);
 
-    resourceSize = SizeofResource(handle, resourceInfo);
-    resourceData = LoadResource(handle, resourceInfo);
-    _tprintf(_T("Resource data: %ld bytes at 0x%p\n"), resourceSize, resourceData);
+    //resourceSize = SizeofResource(handle, resourceInfo);
+    //resourceData = LoadResource(handle, resourceInfo);
+    //_tprintf(_T("Resource data: %ld bytes at 0x%p\n"), resourceSize, resourceData);
 
-    LoadString(handle, 1, buffer, sizeof(buffer));
-    _tprintf(_T("String1: %s\n"), buffer);
+    //LoadString(handle, 1, buffer, sizeof(buffer));
+    //_tprintf(_T("String1: %s\n"), buffer);
 
-    LoadString(handle, 20, buffer, sizeof(buffer));
-    _tprintf(_T("String2: %s\n"), buffer);
-
+    //LoadString(handle, 20, buffer, sizeof(buffer));
+    //_tprintf(_T("String2: %s\n"), buffer);
+	*/
     FreeLibrary(handle);
 }
 
-void* ReadLibrary(size_t* pSize) {
+void* ReadLibrary(size_t* pSize,TCHAR* filePath) {
     size_t read;
     void* result;
     FILE* fp;
 
-    fp = _tfopen(DLL_FILE, _T("rb"));
+	if(nullptr == filePath)
+	{
+		__debugbreak();
+	}
+
+    fp = _tfopen(filePath, _T("rb"));
     if (fp == NULL)
     {
-        _tprintf(_T("Can't open DLL file \"%s\"."), DLL_FILE);
+        _tprintf(_T("Can't open DLL file \"%s\"."), filePath);
 		__debugbreak();
         return NULL;
     }
@@ -91,7 +101,45 @@ void* ReadLibrary(size_t* pSize) {
     return result;
 }
 
-void LoadFromMemory(void)
+void TestPEStruct(TCHAR* filePath)
+{
+	void *data;
+	size_t size;
+	HMEMORYMODULE handle;
+	addNumberProc addNumber;
+	HMEMORYRSRC resourceInfo;
+	DWORD resourceSize;
+	LPVOID resourceData;
+	TCHAR buffer[100];
+	if(nullptr == filePath)
+	{
+		__debugbreak();
+	}
+
+	data = ReadLibrary(&size,filePath);
+	if (data == NULL)
+	{
+		__debugbreak();
+		return;
+	}
+
+	handle = MemoryLoadLibrary(data, size);
+	if (handle == NULL)
+	{
+		_tprintf(_T("Can't load library from memory.\n"));
+		goto exit;
+	}
+
+	//addNumber = (addNumberProc)MemoryGetProcAddress(handle, "addNumbers");
+	//_tprintf(_T("From memory: %d\n"), addNumber(1, 2));
+
+	MemoryFreeLibrary(handle);
+
+exit:
+	free(data);
+}
+
+void LoadFromMemory(TCHAR* filePath)
 {
     void *data;
     size_t size;
@@ -102,7 +150,7 @@ void LoadFromMemory(void)
     LPVOID resourceData;
     TCHAR buffer[100];
 
-    data = ReadLibrary(&size);
+    data = ReadLibrary(&size,filePath);
     if (data == NULL)
     {
 		__debugbreak();
@@ -314,12 +362,12 @@ void TestAllocHighMemory(void *data, size_t size) {
 }
 #endif  // _WIN64
 
-void TestCustomAllocAndFree(void)
+void TestCustomAllocAndFree(TCHAR* filePath)
 {
     void *data;
     size_t size;
 
-    data = ReadLibrary(&size);
+    data = ReadLibrary(&size,filePath);
     if (data == NULL)
     {
 		__debugbreak();
@@ -340,13 +388,26 @@ void TestCustomAllocAndFree(void)
     free(data);
 }
 
-int main()
+int main(int argc,TCHAR** argv)
 {
-    LoadFromFile();
+
+	TCHAR* filePath = nullptr;
+	if(argc>1)
+	{
+		filePath = argv[1];
+	}
+	else
+	{
+		filePath = TEXT("..\\SampleDLL\\Debug\\SampleDLL.dll");
+	}
+
+	LoadFromFile(filePath);
+	printf("\n\n");
+	//LoadFromMemory();
+
+	TestPEStruct(filePath);
     printf("\n\n");
-    LoadFromMemory();
-    printf("\n\n");
-    TestCustomAllocAndFree();
+    TestCustomAllocAndFree(filePath);
     return 0;
 }
 
