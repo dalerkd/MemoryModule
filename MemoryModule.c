@@ -166,6 +166,7 @@ static BOOL
 CheckSize(size_t size, size_t expected) {
     if (size < expected) {
         SetLastError(ERROR_INVALID_DATA);
+		__debugbreak();
         return FALSE;
     }
 
@@ -191,6 +192,7 @@ CopySections(const unsigned char *data, size_t size, PIMAGE_NT_HEADERS old_heade
                     PAGE_READWRITE,
                     module->userdata);
                 if (dest == NULL) {
+					__debugbreak();
                     return FALSE;
                 }
 
@@ -208,6 +210,7 @@ CopySections(const unsigned char *data, size_t size, PIMAGE_NT_HEADERS old_heade
         }
 
         if (!CheckSize(size, section->PointerToRawData + section->SizeOfRawData)) {
+			__debugbreak();
             return FALSE;
         }
 
@@ -218,6 +221,7 @@ CopySections(const unsigned char *data, size_t size, PIMAGE_NT_HEADERS old_heade
                             PAGE_READWRITE,
                             module->userdata);
         if (dest == NULL) {
+			__debugbreak();
             return FALSE;
         }
 
@@ -295,6 +299,7 @@ FinalizeSection(PMEMORYMODULE module, PSECTIONFINALIZEDATA sectionData) {
     // change memory access flags
     if (VirtualProtect(sectionData->address, sectionData->size, protect, &oldProtect) == 0) {
         OutputLastError("Error protecting memory page");
+		__debugbreak();
         return FALSE;
     }
 
@@ -341,6 +346,7 @@ FinalizeSections(PMEMORYMODULE module)
         }
 
         if (!FinalizeSection(module, &sectionData)) {
+			__debugbreak();
             return FALSE;
         }
         sectionData.address = sectionAddress;
@@ -350,6 +356,7 @@ FinalizeSections(PMEMORYMODULE module)
     }
     sectionData.last = TRUE;
     if (!FinalizeSection(module, &sectionData)) {
+		__debugbreak();
         return FALSE;
     }
     return TRUE;
@@ -455,12 +462,14 @@ BuildImportTable(PMEMORYMODULE module)
         HCUSTOMMODULE handle = module->loadLibrary((LPCSTR) (codeBase + importDesc->Name), module->userdata);
         if (handle == NULL) {
             SetLastError(ERROR_MOD_NOT_FOUND);
+			__debugbreak();
             result = FALSE;
             break;
         }
 
         tmp = (HCUSTOMMODULE *) realloc(module->modules, (module->numModules+1)*(sizeof(HCUSTOMMODULE)));
         if (tmp == NULL) {
+			__debugbreak();
             module->freeLibrary(handle, module->userdata);
             SetLastError(ERROR_OUTOFMEMORY);
             result = FALSE;
@@ -485,12 +494,14 @@ BuildImportTable(PMEMORYMODULE module)
                 *funcRef = module->getProcAddress(handle, (LPCSTR)&thunkData->Name, module->userdata);
             }
             if (*funcRef == 0) {
+				__debugbreak();
                 result = FALSE;
                 break;
             }
         }
 
         if (!result) {
+			__debugbreak();
             module->freeLibrary(handle, module->userdata);
             SetLastError(ERROR_PROC_NOT_FOUND);
             break;
@@ -518,6 +529,7 @@ HCUSTOMMODULE MemoryDefaultLoadLibrary(LPCSTR filename, void *userdata)
     UNREFERENCED_PARAMETER(userdata);
     result = LoadLibraryA(filename);
     if (result == NULL) {
+		__debugbreak();
         return NULL;
     }
 
@@ -565,31 +577,37 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 #endif
 
     if (!CheckSize(size, sizeof(IMAGE_DOS_HEADER))) {
+		__debugbreak();
         return NULL;
     }
     dos_header = (PIMAGE_DOS_HEADER)data;
     if (dos_header->e_magic != IMAGE_DOS_SIGNATURE) {
         SetLastError(ERROR_BAD_EXE_FORMAT);
+		__debugbreak();
         return NULL;
     }
 
     if (!CheckSize(size, dos_header->e_lfanew + sizeof(IMAGE_NT_HEADERS))) {
+		__debugbreak();
         return NULL;
     }
     old_header = (PIMAGE_NT_HEADERS)&((const unsigned char *)(data))[dos_header->e_lfanew];
     if (old_header->Signature != IMAGE_NT_SIGNATURE) {
         SetLastError(ERROR_BAD_EXE_FORMAT);
+		__debugbreak();
         return NULL;
     }
 
     if (old_header->FileHeader.Machine != HOST_MACHINE) {
         SetLastError(ERROR_BAD_EXE_FORMAT);
+		__debugbreak();
         return NULL;
     }
 
     if (old_header->OptionalHeader.SectionAlignment & 1) {
         // Only support section alignments that are a multiple of 2
         SetLastError(ERROR_BAD_EXE_FORMAT);
+		__debugbreak();
         return NULL;
     }
 
@@ -613,6 +631,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
     alignedImageSize = AlignValueUp(old_header->OptionalHeader.SizeOfImage, sysInfo.dwPageSize);
     if (alignedImageSize != AlignValueUp(lastSectionEnd, sysInfo.dwPageSize)) {
         SetLastError(ERROR_BAD_EXE_FORMAT);
+		__debugbreak();
         return NULL;
     }
 
@@ -634,6 +653,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
             userdata);
         if (code == NULL) {
             SetLastError(ERROR_OUTOFMEMORY);
+			__debugbreak();
             return NULL;
         }
     }
@@ -643,6 +663,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
     while ((((uintptr_t) code) >> 32) < (((uintptr_t) (code + alignedImageSize)) >> 32)) {
         POINTER_LIST *node = (POINTER_LIST*) malloc(sizeof(POINTER_LIST));
         if (!node) {
+			__debugbreak();
             freeMemory(code, 0, MEM_RELEASE, userdata);
             FreePointerList(blockedMemory, freeMemory, userdata);
             SetLastError(ERROR_OUTOFMEMORY);
@@ -659,6 +680,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
             PAGE_READWRITE,
             userdata);
         if (code == NULL) {
+			__debugbreak();
             FreePointerList(blockedMemory, freeMemory, userdata);
             SetLastError(ERROR_OUTOFMEMORY);
             return NULL;
@@ -668,6 +690,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 
     result = (PMEMORYMODULE)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MEMORYMODULE));
     if (result == NULL) {
+		__debugbreak();
         freeMemory(code, 0, MEM_RELEASE, userdata);
 #ifdef _WIN64
         FreePointerList(blockedMemory, freeMemory, userdata);
@@ -758,6 +781,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 
 error:
     // cleanup
+	__debugbreak();
     MemoryFreeLibrary(result);
     return NULL;
 }
@@ -786,6 +810,7 @@ FARPROC MemoryGetProcAddress(HMEMORYMODULE mod, LPCSTR name)
     if (directory->Size == 0) {
         // no export table found
         SetLastError(ERROR_PROC_NOT_FOUND);
+		__debugbreak();
         return NULL;
     }
 
@@ -793,6 +818,7 @@ FARPROC MemoryGetProcAddress(HMEMORYMODULE mod, LPCSTR name)
     if (exports->NumberOfNames == 0 || exports->NumberOfFunctions == 0) {
         // DLL doesn't export anything
         SetLastError(ERROR_PROC_NOT_FOUND);
+		__debugbreak();
         return NULL;
     }
 
@@ -800,12 +826,14 @@ FARPROC MemoryGetProcAddress(HMEMORYMODULE mod, LPCSTR name)
         // load function by ordinal value
         if (LOWORD(name) < exports->Base) {
             SetLastError(ERROR_PROC_NOT_FOUND);
+			__debugbreak();
             return NULL;
         }
 
         idx = LOWORD(name) - exports->Base;
     } else if (!exports->NumberOfNames) {
         SetLastError(ERROR_PROC_NOT_FOUND);
+		__debugbreak();
         return NULL;
     } else {
         const struct ExportNameEntry *found;
@@ -819,6 +847,7 @@ FARPROC MemoryGetProcAddress(HMEMORYMODULE mod, LPCSTR name)
             module->nameExportsTable = entry;
             if (!entry) {
                 SetLastError(ERROR_OUTOFMEMORY);
+				__debugbreak();
                 return NULL;
             }
             for (i=0; i<exports->NumberOfNames; i++, nameRef++, ordinal++, entry++) {
@@ -838,6 +867,7 @@ FARPROC MemoryGetProcAddress(HMEMORYMODULE mod, LPCSTR name)
         if (!found) {
             // exported symbol not found
             SetLastError(ERROR_PROC_NOT_FOUND);
+			__debugbreak();
             return NULL;
         }
 
@@ -847,6 +877,7 @@ FARPROC MemoryGetProcAddress(HMEMORYMODULE mod, LPCSTR name)
     if (idx > exports->NumberOfFunctions) {
         // name <-> ordinal number don't match
         SetLastError(ERROR_PROC_NOT_FOUND);
+		__debugbreak();
         return NULL;
     }
 
@@ -859,6 +890,7 @@ void MemoryFreeLibrary(HMEMORYMODULE mod)
     PMEMORYMODULE module = (PMEMORYMODULE)mod;
 
     if (module == NULL) {
+		__debugbreak();
         return;
     }
     if (module->initialized) {
@@ -896,6 +928,7 @@ int MemoryCallEntryPoint(HMEMORYMODULE mod)
     PMEMORYMODULE module = (PMEMORYMODULE)mod;
 
     if (module == NULL || module->isDLL || module->exeEntry == NULL || !module->isRelocated) {
+		__debugbreak();
         return -1;
     }
 
@@ -968,6 +1001,7 @@ static PIMAGE_RESOURCE_DIRECTORY_ENTRY _MemorySearchResourceEntry(
             _searchKey = (LPWSTR) malloc(_searchKeySize);
             if (_searchKey == NULL) {
                 SetLastError(ERROR_OUTOFMEMORY);
+				__debugbreak();
                 return NULL;
             }
         } else {
@@ -1027,6 +1061,7 @@ HMEMORYRSRC MemoryFindResourceEx(HMEMORYMODULE module, LPCTSTR name, LPCTSTR typ
     if (directory->Size == 0) {
         // no resource table found
         SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
+		__debugbreak();
         return NULL;
     }
 
@@ -1043,6 +1078,7 @@ HMEMORYRSRC MemoryFindResourceEx(HMEMORYMODULE module, LPCTSTR name, LPCTSTR typ
     foundType = _MemorySearchResourceEntry(rootResources, rootResources, type);
     if (foundType == NULL) {
         SetLastError(ERROR_RESOURCE_TYPE_NOT_FOUND);
+		__debugbreak();
         return NULL;
     }
 
@@ -1050,6 +1086,7 @@ HMEMORYRSRC MemoryFindResourceEx(HMEMORYMODULE module, LPCTSTR name, LPCTSTR typ
     foundName = _MemorySearchResourceEntry(rootResources, typeResources, name);
     if (foundName == NULL) {
         SetLastError(ERROR_RESOURCE_NAME_NOT_FOUND);
+		__debugbreak();
         return NULL;
     }
 
@@ -1059,6 +1096,7 @@ HMEMORYRSRC MemoryFindResourceEx(HMEMORYMODULE module, LPCTSTR name, LPCTSTR typ
         // requested language not found, use first available
         if (nameResources->NumberOfIdEntries == 0) {
             SetLastError(ERROR_RESOURCE_LANG_NOT_FOUND);
+			__debugbreak();
             return NULL;
         }
 
@@ -1074,6 +1112,7 @@ DWORD MemorySizeofResource(HMEMORYMODULE module, HMEMORYRSRC resource)
     UNREFERENCED_PARAMETER(module);
     entry = (PIMAGE_RESOURCE_DATA_ENTRY) resource;
     if (entry == NULL) {
+		__debugbreak();
         return 0;
     }
 
@@ -1085,6 +1124,7 @@ LPVOID MemoryLoadResource(HMEMORYMODULE module, HMEMORYRSRC resource)
     unsigned char *codeBase = ((PMEMORYMODULE) module)->codeBase;
     PIMAGE_RESOURCE_DATA_ENTRY entry = (PIMAGE_RESOURCE_DATA_ENTRY) resource;
     if (entry == NULL) {
+		__debugbreak();
         return NULL;
     }
 
@@ -1104,11 +1144,13 @@ MemoryLoadStringEx(HMEMORYMODULE module, UINT id, LPTSTR buffer, int maxsize, WO
     PIMAGE_RESOURCE_DIR_STRING_U data;
     DWORD size;
     if (maxsize == 0) {
+		__debugbreak();
         return 0;
     }
 
     resource = MemoryFindResourceEx(module, MAKEINTRESOURCE((id >> 4) + 1), RT_STRING, language);
     if (resource == NULL) {
+		__debugbreak();
         buffer[0] = 0;
         return 0;
     }
@@ -1120,6 +1162,7 @@ MemoryLoadStringEx(HMEMORYMODULE module, UINT id, LPTSTR buffer, int maxsize, WO
     }
     if (data->Length == 0) {
         SetLastError(ERROR_RESOURCE_NAME_NOT_FOUND);
+		__debugbreak();
         buffer[0] = 0;
         return 0;
     }

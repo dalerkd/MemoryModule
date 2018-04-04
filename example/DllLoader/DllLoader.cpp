@@ -25,7 +25,10 @@ void LoadFromFile(void)
 
     HINSTANCE handle = LoadLibrary(DLL_FILE);
     if (handle == NULL)
-        return;
+    {
+		__debugbreak();
+		return;
+    }
 
     addNumber = (addNumberProc)GetProcAddress(handle, "addNumbers");
     _tprintf(_T("From file: %d\n"), addNumber(1, 2));
@@ -55,6 +58,7 @@ void* ReadLibrary(size_t* pSize) {
     if (fp == NULL)
     {
         _tprintf(_T("Can't open DLL file \"%s\"."), DLL_FILE);
+		__debugbreak();
         return NULL;
     }
 
@@ -62,6 +66,7 @@ void* ReadLibrary(size_t* pSize) {
     *pSize = static_cast<size_t>(ftell(fp));
     if (*pSize == 0)
     {
+		__debugbreak();
         fclose(fp);
         return NULL;
     }
@@ -69,6 +74,7 @@ void* ReadLibrary(size_t* pSize) {
     result = (unsigned char *)malloc(*pSize);
     if (result == NULL)
     {
+		__debugbreak();
         return NULL;
     }
 
@@ -77,6 +83,7 @@ void* ReadLibrary(size_t* pSize) {
     fclose(fp);
     if (read != *pSize)
     {
+		__debugbreak();
         free(result);
         return NULL;
     }
@@ -98,6 +105,7 @@ void LoadFromMemory(void)
     data = ReadLibrary(&size);
     if (data == NULL)
     {
+		__debugbreak();
         return;
     }
 
@@ -314,6 +322,7 @@ void TestCustomAllocAndFree(void)
     data = ReadLibrary(&size);
     if (data == NULL)
     {
+		__debugbreak();
         return;
     }
 
