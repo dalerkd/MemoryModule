@@ -133,6 +133,8 @@ void TestPEStruct(TCHAR* filePath)
 	//addNumber = (addNumberProc)MemoryGetProcAddress(handle, "addNumbers");
 	//_tprintf(_T("From memory: %d\n"), addNumber(1, 2));
 
+	MemoryCallEntryPoint(handle);
+
 	MemoryFreeLibrary(handle);
 
 exit:

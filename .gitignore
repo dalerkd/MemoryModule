@@ -302,3 +302,4 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 *.exe
+example/DllLoader/VMProtectSDK32.dll
