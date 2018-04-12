@@ -403,7 +403,7 @@ int main(int argc,TCHAR** argv)
 		filePath = TEXT("..\\SampleDLL\\Debug\\SampleDLL.dll");
 	}
 
-	LoadFromFile(filePath);
+	//LoadFromFile(filePath);
 	printf("\n\n");
 	//LoadFromMemory();
 

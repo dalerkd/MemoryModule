@@ -527,6 +527,9 @@ HCUSTOMMODULE MemoryDefaultLoadLibrary(LPCSTR filename, void *userdata)
 {
     HMODULE result;
     UNREFERENCED_PARAMETER(userdata);
+	OutputDebugStringA("е§дкМгди:");
+	OutputDebugStringA(filename);
+	OutputDebugStringA("\r\n");
     result = LoadLibraryA(filename);
     if (result == NULL) {
 		__debugbreak();
