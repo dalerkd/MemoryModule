@@ -33,6 +33,7 @@
 #include <tchar.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #define MAX_DEBUG_STRING 8192 * 2
 #define MAX_REGISTRY_NAME 255
@@ -190,7 +191,7 @@ CheckSize(size_t size, size_t expected) {
 	if (size < expected) {
 		SetLastError(ERROR_INVALID_DATA);
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -223,7 +224,7 @@ CopySections(const unsigned char *data, size_t size, PIMAGE_NT_HEADERS old_heade
 					module->userdata);
 				if (dest == NULL) {
 					{
-						__debugbreak();
+						assert(FALSE);
 						char fname[_MAX_FNAME];
 						char ext[_MAX_EXT];
 						_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -248,7 +249,7 @@ CopySections(const unsigned char *data, size_t size, PIMAGE_NT_HEADERS old_heade
 
 		if (!CheckSize(size, section->PointerToRawData + section->SizeOfRawData)) {
 			{
-				__debugbreak();
+				assert(FALSE);
 				char fname[_MAX_FNAME];
 				char ext[_MAX_EXT];
 				_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -266,7 +267,7 @@ CopySections(const unsigned char *data, size_t size, PIMAGE_NT_HEADERS old_heade
 			module->userdata);
 		if (dest == NULL) {
 			{
-				__debugbreak();
+				assert(FALSE);
 				char fname[_MAX_FNAME];
 				char ext[_MAX_EXT];
 				_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -352,7 +353,7 @@ FinalizeSection(PMEMORYMODULE module, PSECTIONFINALIZEDATA sectionData) {
 	if (VirtualProtect(sectionData->address, sectionData->size, protect, &oldProtect) == 0) {
 		OutputLastError("Error protecting memory page");
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -407,7 +408,7 @@ FinalizeSections(PMEMORYMODULE module)
 
 		if (!FinalizeSection(module, &sectionData)) {
 			{
-				__debugbreak();
+				assert(FALSE);
 				char fname[_MAX_FNAME];
 				char ext[_MAX_EXT];
 				_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -424,7 +425,7 @@ FinalizeSections(PMEMORYMODULE module)
 	sectionData.last = TRUE;
 	if (!FinalizeSection(module, &sectionData)) {
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -537,7 +538,7 @@ BuildImportTable(PMEMORYMODULE module)
 		if (handle == NULL) {
 			SetLastError(ERROR_MOD_NOT_FOUND);
 			{
-				__debugbreak();
+				assert(FALSE);
 				char fname[_MAX_FNAME];
 				char ext[_MAX_EXT];
 				_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -551,7 +552,7 @@ BuildImportTable(PMEMORYMODULE module)
 		tmp = (HCUSTOMMODULE *)realloc(module->modules, (module->numModules + 1)*(sizeof(HCUSTOMMODULE)));
 		if (tmp == NULL) {
 			{
-				__debugbreak();
+				assert(FALSE);
 				char fname[_MAX_FNAME];
 				char ext[_MAX_EXT];
 				_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -585,7 +586,7 @@ BuildImportTable(PMEMORYMODULE module)
 			}
 			if (*funcRef == 0) {
 				{
-					__debugbreak();
+					assert(FALSE);
 					char fname[_MAX_FNAME];
 					char ext[_MAX_EXT];
 					_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -599,7 +600,7 @@ BuildImportTable(PMEMORYMODULE module)
 
 		if (!result) {
 			{
-				__debugbreak();
+				assert(FALSE);
 				char fname[_MAX_FNAME];
 				char ext[_MAX_EXT];
 				_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -637,7 +638,7 @@ HCUSTOMMODULE MemoryDefaultLoadLibrary(LPCSTR filename, void *userdata)
 	result = LoadLibraryA(filename);
 	if (result == NULL) {
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -692,7 +693,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 
 	if (!CheckSize(size, sizeof(IMAGE_DOS_HEADER))) {
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -705,7 +706,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 	if (dos_header->e_magic != IMAGE_DOS_SIGNATURE) {
 		SetLastError(ERROR_BAD_EXE_FORMAT);
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -717,7 +718,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 
 	if (!CheckSize(size, dos_header->e_lfanew + sizeof(IMAGE_NT_HEADERS))) {
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -730,7 +731,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 	if (old_header->Signature != IMAGE_NT_SIGNATURE) {
 		SetLastError(ERROR_BAD_EXE_FORMAT);
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -743,7 +744,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 	if (old_header->FileHeader.Machine != HOST_MACHINE) {
 		SetLastError(ERROR_BAD_EXE_FORMAT);
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -757,7 +758,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 		// Only support section alignments that are a multiple of 2
 		SetLastError(ERROR_BAD_EXE_FORMAT);
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -789,7 +790,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 	if (alignedImageSize != AlignValueUp(lastSectionEnd, sysInfo.dwPageSize)) {
 		SetLastError(ERROR_BAD_EXE_FORMAT);
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -818,7 +819,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 		if (code == NULL) {
 			SetLastError(ERROR_OUTOFMEMORY);
 			{
-				__debugbreak();
+				assert(FALSE);
 				char fname[_MAX_FNAME];
 				char ext[_MAX_EXT];
 				_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -835,7 +836,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 		POINTER_LIST *node = (POINTER_LIST*)malloc(sizeof(POINTER_LIST));
 		if (!node) {
 			{
-				__debugbreak();
+				assert(FALSE);
 				char fname[_MAX_FNAME];
 				char ext[_MAX_EXT];
 				_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -859,7 +860,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 			userdata);
 		if (code == NULL) {
 			{
-				__debugbreak();
+				assert(FALSE);
 				char fname[_MAX_FNAME];
 				char ext[_MAX_EXT];
 				_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -876,7 +877,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 	result = (PMEMORYMODULE)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(MEMORYMODULE));
 	if (result == NULL) {
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -977,7 +978,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 error:
 	// cleanup
 	{
-		__debugbreak();
+		assert(FALSE);
 		char fname[_MAX_FNAME];
 		char ext[_MAX_EXT];
 		_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -1013,7 +1014,7 @@ FARPROC MemoryGetProcAddress(HMEMORYMODULE mod, LPCSTR name)
 		// no export table found
 		SetLastError(ERROR_PROC_NOT_FOUND);
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -1028,7 +1029,7 @@ FARPROC MemoryGetProcAddress(HMEMORYMODULE mod, LPCSTR name)
 		// DLL doesn't export anything
 		SetLastError(ERROR_PROC_NOT_FOUND);
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -1043,7 +1044,7 @@ FARPROC MemoryGetProcAddress(HMEMORYMODULE mod, LPCSTR name)
 		if (LOWORD(name) < exports->Base) {
 			SetLastError(ERROR_PROC_NOT_FOUND);
 			{
-				__debugbreak();
+				assert(FALSE);
 				char fname[_MAX_FNAME];
 				char ext[_MAX_EXT];
 				_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -1058,7 +1059,7 @@ FARPROC MemoryGetProcAddress(HMEMORYMODULE mod, LPCSTR name)
 	else if (!exports->NumberOfNames) {
 		SetLastError(ERROR_PROC_NOT_FOUND);
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -1080,7 +1081,7 @@ FARPROC MemoryGetProcAddress(HMEMORYMODULE mod, LPCSTR name)
 			if (!entry) {
 				SetLastError(ERROR_OUTOFMEMORY);
 				{
-					__debugbreak();
+					assert(FALSE);
 					char fname[_MAX_FNAME];
 					char ext[_MAX_EXT];
 					_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -1107,7 +1108,7 @@ FARPROC MemoryGetProcAddress(HMEMORYMODULE mod, LPCSTR name)
 			// exported symbol not found
 			SetLastError(ERROR_PROC_NOT_FOUND);
 			{
-				__debugbreak();
+				assert(FALSE);
 				char fname[_MAX_FNAME];
 				char ext[_MAX_EXT];
 				_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -1124,7 +1125,7 @@ FARPROC MemoryGetProcAddress(HMEMORYMODULE mod, LPCSTR name)
 		// name <-> ordinal number don't match
 		SetLastError(ERROR_PROC_NOT_FOUND);
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -1144,7 +1145,7 @@ void MemoryFreeLibrary(HMEMORYMODULE mod)
 
 	if (module == NULL) {
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -1189,7 +1190,7 @@ int MemoryCallEntryPoint(HMEMORYMODULE mod)
 
 	if (module == NULL || module->isDLL || module->exeEntry == NULL || !module->isRelocated) {
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -1272,7 +1273,7 @@ static PIMAGE_RESOURCE_DIRECTORY_ENTRY _MemorySearchResourceEntry(
 			if (_searchKey == NULL) {
 				SetLastError(ERROR_OUTOFMEMORY);
 				{
-					__debugbreak();
+					assert(FALSE);
 					char fname[_MAX_FNAME];
 					char ext[_MAX_EXT];
 					_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -1343,7 +1344,7 @@ HMEMORYRSRC MemoryFindResourceEx(HMEMORYMODULE module, LPCTSTR name, LPCTSTR typ
 		// no resource table found
 		SetLastError(ERROR_RESOURCE_DATA_NOT_FOUND);
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -1367,7 +1368,7 @@ HMEMORYRSRC MemoryFindResourceEx(HMEMORYMODULE module, LPCTSTR name, LPCTSTR typ
 	if (foundType == NULL) {
 		SetLastError(ERROR_RESOURCE_TYPE_NOT_FOUND);
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -1382,7 +1383,7 @@ HMEMORYRSRC MemoryFindResourceEx(HMEMORYMODULE module, LPCTSTR name, LPCTSTR typ
 	if (foundName == NULL) {
 		SetLastError(ERROR_RESOURCE_NAME_NOT_FOUND);
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -1399,7 +1400,7 @@ HMEMORYRSRC MemoryFindResourceEx(HMEMORYMODULE module, LPCTSTR name, LPCTSTR typ
 		if (nameResources->NumberOfIdEntries == 0) {
 			SetLastError(ERROR_RESOURCE_LANG_NOT_FOUND);
 			{
-				__debugbreak();
+				assert(FALSE);
 				char fname[_MAX_FNAME];
 				char ext[_MAX_EXT];
 				_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -1421,7 +1422,7 @@ DWORD MemorySizeofResource(HMEMORYMODULE module, HMEMORYRSRC resource)
 	UNREFERENCED_PARAMETER(module);
 	entry = (PIMAGE_RESOURCE_DATA_ENTRY)resource;
 	if (entry == NULL) {
-		__debugbreak();
+		assert(FALSE);
 		return 0;
 	}
 
@@ -1434,7 +1435,7 @@ LPVOID MemoryLoadResource(HMEMORYMODULE module, HMEMORYRSRC resource)
 	PIMAGE_RESOURCE_DATA_ENTRY entry = (PIMAGE_RESOURCE_DATA_ENTRY)resource;
 	if (entry == NULL) {
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -1461,7 +1462,7 @@ MemoryLoadStringEx(HMEMORYMODULE module, UINT id, LPTSTR buffer, int maxsize, WO
 	DWORD size;
 	if (maxsize == 0) {
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -1474,7 +1475,7 @@ MemoryLoadStringEx(HMEMORYMODULE module, UINT id, LPTSTR buffer, int maxsize, WO
 	resource = MemoryFindResourceEx(module, MAKEINTRESOURCE((id >> 4) + 1), RT_STRING, language);
 	if (resource == NULL) {
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);
@@ -1493,7 +1494,7 @@ MemoryLoadStringEx(HMEMORYMODULE module, UINT id, LPTSTR buffer, int maxsize, WO
 	if (data->Length == 0) {
 		SetLastError(ERROR_RESOURCE_NAME_NOT_FOUND);
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath_s(__FILE__, NULL,0, NULL,0, fname,_MAX_FNAME ,ext,_MAX_EXT);

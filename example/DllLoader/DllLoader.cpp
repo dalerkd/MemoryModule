@@ -12,6 +12,7 @@
 #include "../../MemoryModule.h"
 #include <stdlib.h>
 #include "debug.h"
+#include <iostream>
 
 typedef int(*addNumberProc)(int, int);
 
@@ -28,7 +29,7 @@ bool LoadFromFile(TCHAR* filePath)
 	if (nullptr == filePath)
 	{
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath(__FILE__, nullptr, nullptr, fname, ext);
@@ -42,7 +43,7 @@ bool LoadFromFile(TCHAR* filePath)
 	if (handle == NULL)
 	{
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath(__FILE__, nullptr, nullptr, fname, ext);
@@ -80,7 +81,7 @@ void* ReadLibrary(size_t* pSize, TCHAR* filePath) {
 	if (nullptr == filePath)
 	{
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath(__FILE__, nullptr, nullptr, fname, ext);
@@ -94,7 +95,7 @@ void* ReadLibrary(size_t* pSize, TCHAR* filePath) {
 	{
 		_tprintf(_T("Can't open DLL file \"%s\"."), filePath);
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath(__FILE__, nullptr, nullptr, fname, ext);
@@ -109,7 +110,7 @@ void* ReadLibrary(size_t* pSize, TCHAR* filePath) {
 	if (*pSize == 0)
 	{
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath(__FILE__, nullptr, nullptr, fname, ext);
@@ -124,7 +125,7 @@ void* ReadLibrary(size_t* pSize, TCHAR* filePath) {
 	if (result == NULL)
 	{
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath(__FILE__, nullptr, nullptr, fname, ext);
@@ -140,7 +141,7 @@ void* ReadLibrary(size_t* pSize, TCHAR* filePath) {
 	if (read != *pSize)
 	{
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath(__FILE__, nullptr, nullptr, fname, ext);
@@ -167,7 +168,7 @@ void TestPEStruct(TCHAR* filePath)
 	if (nullptr == filePath)
 	{
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath(__FILE__, nullptr, nullptr, fname, ext);
@@ -180,7 +181,7 @@ void TestPEStruct(TCHAR* filePath)
 	if (data == NULL)
 	{
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath(__FILE__, nullptr, nullptr, fname, ext);
@@ -223,7 +224,7 @@ void LoadFromMemory(TCHAR* filePath)
 	if (data == NULL)
 	{
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath(__FILE__, nullptr, nullptr, fname, ext);
@@ -447,7 +448,7 @@ void TestCustomAllocAndFree(TCHAR* filePath)
 	if (data == NULL)
 	{
 		{
-			__debugbreak();
+			assert(FALSE);
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath(__FILE__, nullptr, nullptr, fname, ext);
@@ -473,6 +474,8 @@ void TestCustomAllocAndFree(TCHAR* filePath)
 
 int main(int argc, TCHAR** argv)
 {
+	char FilePathBuffer[MAX_PATH] = { 0 };
+
 	TCHAR* filePath = nullptr;
 	if (argc > 1)
 	{
@@ -487,7 +490,10 @@ int main(int argc, TCHAR** argv)
 	}
 	else
 	{
-		filePath = TEXT("..\\SampleDLL\\Debug\\SampleDLL.dll");
+		printf("Please Input a file path used check...:\r\n");
+		
+		std::cin.getline(FilePathBuffer,MAX_PATH);
+		filePath = FilePathBuffer;
 	}
 
 	printf("Try Use LoadLibrary Load File");
