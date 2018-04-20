@@ -191,6 +191,22 @@ void TestPEStruct(TCHAR* filePath)
 		return;
 	}
 
+
+
+	/*设置目标目录为DLL目录。
+	使搜索dll路径有效.
+	*/
+	{
+		char fname[_MAX_FNAME];
+		memset(fname, 0, sizeof(fname));
+		char _drive[_MAX_DRIVE];
+		char _dir[_MAX_DIR];
+		_splitpath(filePath, _drive,_dir, nullptr,nullptr);
+		strcat_s(fname, _MAX_FNAME, _drive);
+		strcat_s(fname, _MAX_FNAME, _dir);
+		SetDllDirectoryA(fname);
+	}
+
 	handle = MemoryLoadLibrary(data, size);
 	if (handle == NULL)
 	{
@@ -490,18 +506,18 @@ int main(int argc, TCHAR** argv)
 	}
 	else
 	{
-		printf("Please Input a file path used check...:\r\n");
+		OutputDebug("Please Input a file path used check...:\r\n");
 		
 		std::cin.getline(FilePathBuffer,MAX_PATH);
 		filePath = FilePathBuffer;
 	}
-
-	printf("Try Use LoadLibrary Load File");
+	OutputDebug("*******************************************\r\n");
+	OutputDebug("Loading File...:\"%s\" \r\n",filePath);
 	bool ret = LoadFromFile(filePath);
 
 	if(ret)
 	{
-		printf("使用系统LoadLibrary成功加载，退出进一步检测请输入q。System Loadlibrary have not error:)\r\n");
+		OutputDebug("使用系统LoadLibrary成功加载,\r\n退出进一步检测请输入 \"q\"\r\n继续检测请输入 任意键\r\n");
 		char a= getchar();
 		if(a=='q')
 		{
@@ -510,11 +526,11 @@ int main(int argc, TCHAR** argv)
 	}
 	else
 	{
-		printf("系统API加载该模块失败，意味着存在问题，正在执行深度检测\r\n");
+		OutputDebug("系统API加载该模块失败，意味着存在问题，正在执行深度检测\r\n");
 	}
 
 
-	printf("\n\n");
+	OutputDebug("\n\n");
 	//LoadFromMemory();
 
 	__try

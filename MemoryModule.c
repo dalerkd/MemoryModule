@@ -118,6 +118,7 @@ typedef struct {
 	void *userdata;
 	ExeEntryProc exeEntry;
 	DWORD pageSize;
+	wchar_t* ExeFullPath;/*全路径*/
 #ifdef _WIN64
 	POINTER_LIST *blockedMemory;
 #endif
@@ -632,9 +633,7 @@ HCUSTOMMODULE MemoryDefaultLoadLibrary(LPCSTR filename, void *userdata)
 {
 	HMODULE result;
 	UNREFERENCED_PARAMETER(userdata);
-	OutputDebugStringA("正在加载:");
-	OutputDebugStringA(filename);
-	OutputDebugStringA("\r\n");
+	OutputDebug("Loading \"%s\"\r\n", filename);
 	result = LoadLibraryA(filename);
 	if (result == NULL) {
 		{
