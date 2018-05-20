@@ -29,6 +29,15 @@
 #ifndef __MEMORY_MODULE_HEADER
 #define __MEMORY_MODULE_HEADER
 
+///////////////////////////////////
+enum _MODULE_TYPE {
+	SYSTEM_DEFAULT_LOAD_MODE,//系统API加载进来的库
+	MEMORY_LOAD_MODE//我们的内存API加载进来的库
+}MODULE_TYPE;
+int g_NOW_LOAD_MODULE_MODE = 0;
+
+//////////////////////////////////////
+
 #include <windows.h>
 
 typedef void *HMEMORYMODULE;

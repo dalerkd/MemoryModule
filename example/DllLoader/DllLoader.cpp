@@ -18,6 +18,8 @@ typedef int(*addNumberProc)(int, int);
 
 //#define DLL_FILE TEXT("..\\SampleDLL\\Debug\\SampleDLL.dll")
 
+HMEMORYMODULE MemoryLoadLibraryMainA(char* filePath, void*)/*用于替代标准的LoadLibrary*/;
+
 bool LoadFromFile(TCHAR* filePath)
 {
 	addNumberProc addNumber;
@@ -33,7 +35,7 @@ bool LoadFromFile(TCHAR* filePath)
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath(__FILE__, nullptr, nullptr, fname, ext);
-			strcat_s(fname,_MAX_FNAME, ext);
+			strcat_s(fname, _MAX_FNAME, ext);
 			OutputDebug("成功检测到错误,检测代码在:%s:%s:%d行\r\n ", fname, __FUNCTION__, __LINE__ - 7);
 		}
 		return false;
@@ -47,7 +49,7 @@ bool LoadFromFile(TCHAR* filePath)
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath(__FILE__, nullptr, nullptr, fname, ext);
-			strcat_s(fname,_MAX_FNAME, ext);
+			strcat_s(fname, _MAX_FNAME, ext);
 			OutputDebug("成功检测到错误,检测代码在:%s:%s:%d行\r\n ", fname, __FUNCTION__, __LINE__ - 7);
 		}
 		return false;
@@ -85,7 +87,7 @@ void* ReadLibrary(size_t* pSize, TCHAR* filePath) {
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath(__FILE__, nullptr, nullptr, fname, ext);
-			strcat_s(fname,_MAX_FNAME, ext);
+			strcat_s(fname, _MAX_FNAME, ext);
 			OutputDebug("成功检测到错误,检测代码在:%s:%s:%d行\r\n ", fname, __FUNCTION__, __LINE__ - 7);
 		}
 	}
@@ -99,7 +101,7 @@ void* ReadLibrary(size_t* pSize, TCHAR* filePath) {
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath(__FILE__, nullptr, nullptr, fname, ext);
-			strcat_s(fname,_MAX_FNAME, ext);
+			strcat_s(fname, _MAX_FNAME, ext);
 			OutputDebug("成功检测到错误,检测代码在:%s:%s:%d行\r\n ", fname, __FUNCTION__, __LINE__ - 7);
 		}
 		return NULL;
@@ -114,7 +116,7 @@ void* ReadLibrary(size_t* pSize, TCHAR* filePath) {
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath(__FILE__, nullptr, nullptr, fname, ext);
-			strcat_s(fname,_MAX_FNAME, ext);
+			strcat_s(fname, _MAX_FNAME, ext);
 			OutputDebug("成功检测到错误,检测代码在:%s:%s:%d行\r\n ", fname, __FUNCTION__, __LINE__ - 7);
 		}
 		fclose(fp);
@@ -129,7 +131,7 @@ void* ReadLibrary(size_t* pSize, TCHAR* filePath) {
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath(__FILE__, nullptr, nullptr, fname, ext);
-			strcat_s(fname,_MAX_FNAME, ext);
+			strcat_s(fname, _MAX_FNAME, ext);
 			OutputDebug("成功检测到错误,检测代码在:%s:%s:%d行\r\n ", fname, __FUNCTION__, __LINE__ - 7);
 		}
 		return NULL;
@@ -145,7 +147,7 @@ void* ReadLibrary(size_t* pSize, TCHAR* filePath) {
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath(__FILE__, nullptr, nullptr, fname, ext);
-			strcat_s(fname,_MAX_FNAME, ext);
+			strcat_s(fname, _MAX_FNAME, ext);
 			OutputDebug("成功检测到错误,检测代码在:%s:%s:%d行\r\n ", fname, __FUNCTION__, __LINE__ - 7);
 		}
 		free(result);
@@ -156,6 +158,177 @@ void* ReadLibrary(size_t* pSize, TCHAR* filePath) {
 }
 
 void TestPEStruct(TCHAR* filePath)
+{
+	HMEMORYMODULE handle = MemoryLoadLibraryMainA(filePath,nullptr);
+
+	if (NULL==handle)
+	{
+		return;
+	}
+
+	MemoryFreeLibrary(handle);
+
+	//需要增加释放内存的管理
+
+}
+
+/*
+管理library列表:
+- 类型:
+使用系统API加载进来的dll则使用一套系统的API:Load//如何检测自己是否加载某个dll？GetModuleHandle("xxxx")
+
+
+
+
+
+
+功能：
+- 增
+- 查 MemoryLoadModuleHandleA:增加引用计数
+return:
+	0:继续加载
+	other:直接返回内部handle
+
+
+	- Name
+	- 文件体占用内存指针管理
+	- HANDLE//如果是系统加载的内容为空。
+	- 引用计数//为零时卸载
+
+*/
+
+struct st_file {
+	char fname[_MAX_FNAME];
+	HMEMORYMODULE hd;//如果系统加载的东西
+	int Reference_Number;//引用计数，为零时卸载
+	void* data;//PE模块加载到系统的地址，需要释放
+};
+
+/*当前正在加载的模块 属于哪些加载模式?
+
+*/
+extern enum _MODULE_TYPE MODULE_TYPE;
+//当前正在已哪种方式加载库
+extern int g_NOW_LOAD_MODULE_MODE;
+
+
+#include<vector>
+#include<map>
+#include<string>
+
+
+/*
+两者值信息相同
+键：分别是是模块名和模块句柄
+*/
+std::map<std::string, st_file > map_ModuleName2LoadModuleInfo;
+std::map<HMEMORYMODULE, std::string > map_ModuleHandle2LoadModuleName;
+
+//查找和添加库信息
+HMEMORYMODULE QueryAddLoadLibraryName(char* filePath, void* data/*DLL文件占据的内存空间*/)
+{
+	char fname[_MAX_FNAME];
+	char ext[_MAX_EXT];
+	_splitpath(filePath, nullptr, nullptr, fname, ext);
+	strcat_s(fname, _MAX_FNAME, ext);
+
+	//判断是否被系统默认加载
+	HANDLE hd = GetModuleHandleA(fname);
+	if (hd)
+	{
+		g_NOW_LOAD_MODULE_MODE = SYSTEM_DEFAULT_LOAD_MODE;
+		return LoadLibraryA(fname);
+	}
+	else
+	{
+		std::map<std::string, st_file >::iterator iter = map_ModuleName2LoadModuleInfo.find(fname);
+
+		if (map_ModuleName2LoadModuleInfo.end() != iter)
+		{
+			iter->second.Reference_Number += 1;
+			
+			g_NOW_LOAD_MODULE_MODE = MEMORY_LOAD_MODE;
+
+			return iter->second.hd;
+		}
+		else
+		{
+			st_file tmp;
+			tmp.data = data;
+			tmp.hd = NULL;
+			tmp.Reference_Number = 1;
+			map_ModuleName2LoadModuleInfo[fname] = tmp;
+			//map_ModuleHandle2LoadModuleInfo[] = std::string(fname);
+
+			g_NOW_LOAD_MODULE_MODE = MEMORY_LOAD_MODE;
+			return NULL;
+		}
+
+	}
+}
+/*
+释放该模块，引用计数减少至到0,全部释放和删除
+
+*/
+bool MemoryFreePE_File(HMEMORYMODULE hd)
+{
+	std::map<HMEMORYMODULE, std::string>::iterator iterhd = map_ModuleHandle2LoadModuleName.find(hd);
+
+	if (map_ModuleHandle2LoadModuleName.end() != iterhd)
+	{
+		std::string fileNameStr = iterhd->second;
+
+		std::map<std::string, st_file >::iterator iter = map_ModuleName2LoadModuleInfo.find(fileNameStr);
+		if (map_ModuleName2LoadModuleInfo.end() != iter)
+		{
+			
+			if (iter->second.Reference_Number > 1) 
+			{ iter->second.Reference_Number -= 1; }
+			else
+			{//引用数量此时为零，全部释放资源
+				free(iter->second.data);
+				map_ModuleName2LoadModuleInfo.erase(iter);
+				map_ModuleHandle2LoadModuleName.erase(iterhd);
+			}
+
+
+			return true;
+		}
+	}
+	else
+	{
+		return false;
+	}
+}
+
+
+/*
+建立模块信息和文件名之间的关系
+*/
+void AddModuleHandle2LoadModuleInfo(HMEMORYMODULE hd, char* filePath)
+{
+	map_ModuleHandle2LoadModuleName[hd] = filePath;
+}
+
+
+/*
+这个模块它被加载过吗
+*/
+bool HaveModuleHandleLoaded(HMEMORYMODULE hd)
+{
+	std::map<HMEMORYMODULE,std::string>::iterator iter = map_ModuleHandle2LoadModuleName.find(hd);
+
+	if (map_ModuleHandle2LoadModuleName.end() != iter)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+HMEMORYMODULE MemoryLoadLibraryMainA(char* filePath,void*)/*用于替代标准的LoadLibrary*/
 {
 	void *data;
 	size_t size;
@@ -172,9 +345,10 @@ void TestPEStruct(TCHAR* filePath)
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath(__FILE__, nullptr, nullptr, fname, ext);
-			strcat_s(fname,_MAX_FNAME, ext);
+			strcat_s(fname, _MAX_FNAME, ext);
 			OutputDebug("成功检测到错误,检测代码在:%s:%s:%d行\r\n ", fname, __FUNCTION__, __LINE__ - 7);
 		}
+		return NULL;
 	}
 
 	data = ReadLibrary(&size, filePath);
@@ -185,29 +359,37 @@ void TestPEStruct(TCHAR* filePath)
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath(__FILE__, nullptr, nullptr, fname, ext);
-			strcat_s(fname,_MAX_FNAME, ext);
+			strcat_s(fname, _MAX_FNAME, ext);
 			OutputDebug("成功检测到错误,检测代码在:%s:%s:%d行\r\n ", fname, __FUNCTION__, __LINE__ - 7);
 		}
-		return;
+		return NULL;
+	}
+
+	//查找是否已经加载该模块，如果没有则记录之
+	HMEMORYMODULE  hd = QueryAddLoadLibraryName(filePath, data);
+	if (NULL != hd)
+	{
+		return hd;//已经加载过
+	}
+	else
+	{
+		;//未被加载过：继续模拟加载
 	}
 
 	handle = MemoryLoadLibrary(data, size);
 	if (handle == NULL)
 	{
-		_tprintf(_T("Can't load library from memory.\n"));
-		goto exit;
+		OutputDebug(_T("Can't load library:%s ,from memory.\n"),filePath);
+		//free(data);
 	}
-
-	//addNumber = (addNumberProc)MemoryGetProcAddress(handle, "addNumbers");
-	//_tprintf(_T("From memory: %d\n"), addNumber(1, 2));
-
-	MemoryCallEntryPoint(handle);
-
-	MemoryFreeLibrary(handle);
-
-exit:
-	free(data);
+	else
+	{
+		MemoryCallEntryPoint(handle);//dllmain，只会在第一次被调用。√
+	}
+	return handle;
+	
 }
+
 
 void LoadFromMemory(TCHAR* filePath)
 {
@@ -228,7 +410,7 @@ void LoadFromMemory(TCHAR* filePath)
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath(__FILE__, nullptr, nullptr, fname, ext);
-			strcat_s(fname,_MAX_FNAME, ext);
+			strcat_s(fname, _MAX_FNAME, ext);
 			OutputDebug("成功检测到错误,检测代码在:%s:%s:%d行\r\n ", fname, __FUNCTION__, __LINE__ - 7);
 		}
 		return;
@@ -452,7 +634,7 @@ void TestCustomAllocAndFree(TCHAR* filePath)
 			char fname[_MAX_FNAME];
 			char ext[_MAX_EXT];
 			_splitpath(__FILE__, nullptr, nullptr, fname, ext);
-			strcat_s(fname,_MAX_FNAME, ext);
+			strcat_s(fname, _MAX_FNAME, ext);
 			OutputDebug("成功检测到错误,检测代码在:%s:%s:%d行\r\n ", fname, __FUNCTION__, __LINE__ - 7);
 		}
 		return;
@@ -479,11 +661,11 @@ int main(int argc, TCHAR** argv)
 	TCHAR* filePath = nullptr;
 	if (argc > 1)
 	{
-		if(0==strcmp("-v",argv[1]))
+		if (0 == strcmp("-v", argv[1]))
 		{
 			char version[256] = { 0 };
-			sprintf_s(version, "编译日期%s\r\n编译时间%s",__DATE__,__TIME__);
-			MessageBoxA(0,version,"",0);
+			sprintf_s(version, "编译日期%s\r\n编译时间%s", __DATE__, __TIME__);
+			MessageBoxA(0, version, "", 0);
 			return 1;
 		}
 		filePath = argv[1];
@@ -491,19 +673,19 @@ int main(int argc, TCHAR** argv)
 	else
 	{
 		printf("Please Input a file path used check...:\r\n");
-		
-		std::cin.getline(FilePathBuffer,MAX_PATH);
+
+		std::cin.getline(FilePathBuffer, MAX_PATH);
 		filePath = FilePathBuffer;
 	}
 
 	printf("Try Use LoadLibrary Load File");
 	bool ret = LoadFromFile(filePath);
 
-	if(ret)
+	if (ret)
 	{
 		printf("使用系统LoadLibrary成功加载，退出进一步检测请输入q。System Loadlibrary have not error:)\r\n");
-		char a= getchar();
-		if(a=='q')
+		char a = getchar();
+		if (a == 'q')
 		{
 			return 2;
 		}

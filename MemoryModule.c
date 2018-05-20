@@ -29,6 +29,12 @@
  *
  * These portions are Copyright (C) 2013 Thomas Heller.
  */
+
+////////////////////////
+
+
+////////////////////////
+
 #include "example/DllLoader/debug.h"
 #include <tchar.h>
 #include <stdio.h>
@@ -545,6 +551,10 @@ BuildImportTable(PMEMORYMODULE module)
 				strcat_s(fname,_MAX_FNAME, ext);
 				OutputDebug("成功检测到错误,检测代码在:%s:%s:%d行\r\n ", fname, __FUNCTION__, __LINE__ - 7);
 			}
+			OutputDebug("使用系统LoadLibrary加载模块失败:%s ，任意输入退出程序\r\n", codeBase + importDesc->Name);
+			char a =(char) getchar();
+				ExitProcess(-6);
+			
 			result = FALSE;
 			break;
 		}
@@ -650,22 +660,45 @@ HCUSTOMMODULE MemoryDefaultLoadLibrary(LPCSTR filename, void *userdata)
 
 	return (HCUSTOMMODULE)result;
 }
-
+//将系统方式加载改为了自动判别加载模式
 FARPROC MemoryDefaultGetProcAddress(HCUSTOMMODULE module, LPCSTR name, void *userdata)
 {
 	UNREFERENCED_PARAMETER(userdata);
-	return (FARPROC)GetProcAddress((HMODULE)module, name);
-}
 
+	if (g_NOW_LOAD_MODULE_MODE==SYSTEM_DEFAULT_LOAD_MODE)
+	{
+		return (FARPROC)GetProcAddress((HMODULE)module, name);
+	}
+	else
+	{
+		return MemoryGetProcAddress(module, name);
+	}
+}
+//将系统方式卸载改为了自动判别卸载模式
 void MemoryDefaultFreeLibrary(HCUSTOMMODULE module, void *userdata)
 {
 	UNREFERENCED_PARAMETER(userdata);
-	FreeLibrary((HMODULE)module);
+	if (g_NOW_LOAD_MODULE_MODE == SYSTEM_DEFAULT_LOAD_MODE)
+	{
+		FreeLibrary((HMODULE)module);
+	}
+	else
+	{
+		MemoryFreeLibrary(module);
+	}
 }
+/*用于替代标准的LoadLibrary*/
+//enum MODULE_TYPE {
+//	SYSTEM_DEFAULT_LOAD_MODE,//系统API加载进来的库
+//	MEMORY_LOAD_MODE//我们的内存API加载进来的库
+//};
+extern HMEMORYMODULE MemoryLoadLibraryMainA(LPCSTR filePath, void*);
+extern BOOL MemoryFreePE_File(HMEMORYMODULE hd);
+extern HCUSTOMMODULE MemoryLoadLibraryMainA(LPCSTR, void *);
 
 HMEMORYMODULE MemoryLoadLibrary(const void *data, size_t size)
 {
-	return MemoryLoadLibraryEx(data, size, MemoryDefaultAlloc, MemoryDefaultFree, MemoryDefaultLoadLibrary, MemoryDefaultGetProcAddress, MemoryDefaultFreeLibrary, NULL);
+	return MemoryLoadLibraryEx(data, size, MemoryDefaultAlloc, MemoryDefaultFree, MemoryLoadLibraryMainA, MemoryDefaultGetProcAddress, MemoryDefaultFreeLibrary, NULL);
 }
 
 HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
@@ -1142,6 +1175,9 @@ FARPROC MemoryGetProcAddress(HMEMORYMODULE mod, LPCSTR name)
 void MemoryFreeLibrary(HMEMORYMODULE mod)
 {
 	PMEMORYMODULE module = (PMEMORYMODULE)mod;
+	
+	//接触一次引用对该模块
+	MemoryFreePE_File(mod);
 
 	if (module == NULL) {
 		{
@@ -1182,6 +1218,11 @@ void MemoryFreeLibrary(HMEMORYMODULE mod)
 	FreePointerList(module->blockedMemory, module->free, module->userdata);
 #endif
 	HeapFree(GetProcessHeap(), 0, module);
+
+
+
+	
+
 }
 
 int MemoryCallEntryPoint(HMEMORYMODULE mod)
