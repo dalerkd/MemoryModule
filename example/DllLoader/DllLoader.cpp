@@ -17,9 +17,10 @@
 typedef int(*addNumberProc)(int, int);
 
 //#define DLL_FILE TEXT("..\\SampleDLL\\Debug\\SampleDLL.dll")
-
-HMEMORYMODULE MemoryLoadLibraryMainA(char* filePath, void*)/*用于替代标准的LoadLibrary*/;
-
+extern "C" {
+	HMEMORYMODULE MemoryLoadLibraryMainA(char* filePath, void*)/*用于替代标准的LoadLibrary*/;
+	bool MemoryFreePE_File(HMEMORYMODULE hd);
+}
 bool LoadFromFile(TCHAR* filePath)
 {
 	addNumberProc addNumber;
@@ -294,6 +295,10 @@ bool MemoryFreePE_File(HMEMORYMODULE hd)
 
 			return true;
 		}
+		else {
+			return false;
+		}
+		
 	}
 	else
 	{
@@ -327,7 +332,16 @@ bool HaveModuleHandleLoaded(HMEMORYMODULE hd)
 		return false;
 	}
 }
+/*
+这个模块需要修正:
+- 系统默认路径加载DLL
+失败则使用本地加载的方式来做:4
 
+疑问?是否会对XX造成影响.
+- 
+- 
+
+*/
 HMEMORYMODULE MemoryLoadLibraryMainA(char* filePath,void*)/*用于替代标准的LoadLibrary*/
 {
 	void *data;
@@ -351,6 +365,37 @@ HMEMORYMODULE MemoryLoadLibraryMainA(char* filePath,void*)/*用于替代标准的LoadLi
 		return NULL;
 	}
 
+	/*设置目标目录为DLL目录。
+	使搜索dll路径有效.
+	*/
+	{
+		char fname[_MAX_FNAME];
+		memset(fname, 0, sizeof(fname));
+		char _drive[_MAX_DRIVE];
+		char _dir[_MAX_DIR];
+		_splitpath(filePath, _drive, _dir, nullptr, nullptr);
+		strcat_s(fname, _MAX_FNAME, _drive);
+		strcat_s(fname, _MAX_FNAME, _dir);
+		SetDllDirectoryA(fname);
+	}
+
+	// 尝试正常加载
+	{
+		char fname[_MAX_FNAME];
+		char ext[_MAX_EXT];
+		_splitpath(filePath, nullptr, nullptr, fname, ext);
+		strcat_s(fname, _MAX_FNAME, ext);
+		HMODULE hm = LoadLibraryA(fname);
+		/*
+		判断该模块是否存在错误
+		如果可以正常加载,说明没有错误
+		*/
+		if (hm) {
+			g_NOW_LOAD_MODULE_MODE = SYSTEM_DEFAULT_LOAD_MODE;
+			return hm;
+		}
+	}
+
 	data = ReadLibrary(&size, filePath);
 	if (data == NULL)
 	{
@@ -364,33 +409,26 @@ HMEMORYMODULE MemoryLoadLibraryMainA(char* filePath,void*)/*用于替代标准的LoadLi
 		}
 		return NULL;
 	}
-
+	/*
+	这里的问题是
+	如果是 系统文件 会读不到.
+	所以应该:
+	LoadLibrary()先.
+	如果成功了就下一步
+	
+	*/
 	//查找是否已经加载该模块，如果没有则记录之
 	HMEMORYMODULE  hd = QueryAddLoadLibraryName(filePath, data);
 	if (NULL != hd)
 	{
 		return hd;//已经加载过
 	}
-	else
-	{
-		;//未被加载过：继续模拟加载
-	}
+	;//未被加载过：继续模拟加载
+	
 
 
 
-	/*设置目标目录为DLL目录。
-	使搜索dll路径有效.
-	*/
-	{
-		char fname[_MAX_FNAME];
-		memset(fname, 0, sizeof(fname));
-		char _drive[_MAX_DRIVE];
-		char _dir[_MAX_DIR];
-		_splitpath(filePath, _drive,_dir, nullptr,nullptr);
-		strcat_s(fname, _MAX_FNAME, _drive);
-		strcat_s(fname, _MAX_FNAME, _dir);
-		SetDllDirectoryA(fname);
-	}
+
 
 	handle = MemoryLoadLibrary(data, size);
 	if (handle == NULL)
@@ -688,15 +726,13 @@ int main(int argc, TCHAR** argv)
 	}
 	else
 	{
-<<<<<<< HEAD
 		printf("Please Input a file path used check...:\r\n");
 
 		std::cin.getline(FilePathBuffer, MAX_PATH);
-=======
 		OutputDebug("Please Input a file path used check...:\r\n");
 		
 		std::cin.getline(FilePathBuffer,MAX_PATH);
->>>>>>> origin/PE_format_checker
+
 		filePath = FilePathBuffer;
 	}
 	OutputDebug("*******************************************\r\n");
@@ -705,15 +741,11 @@ int main(int argc, TCHAR** argv)
 
 	if (ret)
 	{
-<<<<<<< HEAD
 		printf("使用系统LoadLibrary成功加载，退出进一步检测请输入q。System Loadlibrary have not error:)\r\n");
-		char a = getchar();
-		if (a == 'q')
-=======
+		
 		OutputDebug("使用系统LoadLibrary成功加载,\r\n退出进一步检测请输入 \"q\"\r\n继续检测请输入 任意键\r\n");
 		char a= getchar();
 		if(a=='q')
->>>>>>> origin/PE_format_checker
 		{
 			return 2;
 		}

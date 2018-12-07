@@ -20,6 +20,34 @@ Check EXE Why Error
 3. 大量的标注和信息获取.
 4. 异常截获,让本程序能正常使用.
 
+下一步工作:
+##增加对所有依赖库的格式解析与加载
+目前是调用系统的LoadLibrary("")
+为了进一步检查依赖的DLL是否有问题，所以需要全面检查依赖DLL。
+
+主要有两步工作：
+1. 加载库路径的顺序的配置:提供两套
+2. 已经加载文件的列表:是否需要加载取决于是否已经存在.
+列表有默认值是本分析程序依赖的dll:
+{
+	ntdll.dll,
+	kernel32.dll,
+	KernelBase.dll,
+	user32.dll,
+	gdi32.dll,
+	lpk.dll,
+	usp10.dll,
+	msvcrt.dll,
+	advapi32.dll,
+	sechost.dll,
+	rpcrt4.dll,
+	sspicli.dll,
+	cryptbase.dll,
+	imm32.dll,
+	msctf.dll,
+	api-ms-win-core-synch-l1-2-0.dll
+
+}
 
 
 
