@@ -736,8 +736,8 @@ int main(int argc, TCHAR** argv)
 	}
 	else
 	{
-		printf("使用方法 会在检测出错误时 报告具体的检测代码位置,通过对比源码文件,就知道是什么错误了.\r\n输入 -v 可以查看编译时间,以便和源码对应.");
-		printf("Please Input a file path used check...:\r\n");
+		printf("使用方法 会在检测出错误时 报告具体的检测代码位置,通过对比源码文件,就知道是什么错误了.\r\n输入 -v 可以查看编译时间,以便和源码对应.\r\n\r\n");
+		printf("请输入要检查PE文件的路径 或者 拖动一个文件进来:\r\n");
 		std::cin.getline(FilePathBuffer, MAX_PATH);
 
 		filePath = FilePathBuffer;
