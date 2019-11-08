@@ -552,13 +552,14 @@ BuildImportTable(PMEMORYMODULE module)
 				strcat_s(fname,_MAX_FNAME, ext);
 				OutputDebug("成功检测到错误,检测代码在:%s:%s:%d行\r\n ", fname, __FUNCTION__, __LINE__ - 7);
 			}
-			OutputDebug("使用系统LoadLibrary加载模块失败:%s ，任意输入退出程序\r\n", codeBase + importDesc->Name);
+			OutputDebug("使用系统LoadLibrary加载 依赖子模块 失败:%s ，任意输入退出程序\r\n", codeBase + importDesc->Name);
 			char a =(char) getchar();
 				ExitProcess(-6);
 			
 			result = FALSE;
 			break;
 		}
+		OutputDebug("使用系统LoadLibrary加载 依赖子模块 成功:%s\r\n", codeBase + importDesc->Name);
 
 		tmp = (HCUSTOMMODULE *)realloc(module->modules, (module->numModules + 1)*(sizeof(HCUSTOMMODULE)));
 		if (tmp == NULL) {
@@ -734,6 +735,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 		}
 		return NULL;
 	}
+	printf("检查文件尺寸>IMAGE_DOS_HEADER: 成功\r\n");
 	dos_header = (PIMAGE_DOS_HEADER)data;
 	if (dos_header->e_magic != IMAGE_DOS_SIGNATURE) {
 		SetLastError(ERROR_BAD_EXE_FORMAT);
@@ -747,6 +749,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 		}
 		return NULL;
 	}
+	printf("检查NT Magic: 成功\r\n");
 
 	if (!CheckSize(size, dos_header->e_lfanew + sizeof(IMAGE_NT_HEADERS))) {
 		{
@@ -759,6 +762,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 		}
 		return NULL;
 	}
+	printf("检查文件尺寸>IMAGE_NT_HEADERS: 成功\r\n");
 	old_header = (PIMAGE_NT_HEADERS)&((const unsigned char *)(data))[dos_header->e_lfanew];
 	if (old_header->Signature != IMAGE_NT_SIGNATURE) {
 		SetLastError(ERROR_BAD_EXE_FORMAT);
@@ -772,6 +776,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 		}
 		return NULL;
 	}
+	printf("检查PE Magic: 成功\r\n");
 
 	if (old_header->FileHeader.Machine != HOST_MACHINE) {
 		SetLastError(ERROR_BAD_EXE_FORMAT);
@@ -785,6 +790,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 		}
 		return NULL;
 	}
+	printf("检查PE Machine 适合本机器: 成功\r\n");
 
 	if (old_header->OptionalHeader.SectionAlignment & 1) {
 		// Only support section alignments that are a multiple of 2
@@ -799,6 +805,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 		}
 		return NULL;
 	}
+	printf("支持2倍节对齐: 成功\r\n");
 
 	section = IMAGE_FIRST_SECTION(old_header);
 	optionalSectionSize = old_header->OptionalHeader.SectionAlignment;
@@ -831,6 +838,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 		}
 		return NULL;
 	}
+	printf("文件对齐与系统匹配: 成功\r\n");
 
 	// reserve memory for image of library
 	// XXX: is it correct to commit the complete memory region at once?
@@ -940,7 +948,7 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 	if (!CheckSize(size, old_header->OptionalHeader.SizeOfHeaders)) {
 		goto error;
 	}
-
+	printf("文件大小>Option描述的头尺寸: 成功\r\n");
 	// commit memory for headers
 	headers = (unsigned char *)allocMemory(code,
 		old_header->OptionalHeader.SizeOfHeaders,
@@ -968,23 +976,25 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 	else {
 		result->isRelocated = TRUE;
 	}
+	printf("重定位表相关修复: 成功\r\n");
 
 	// load required dlls and adjust function table of imports
 	if (!BuildImportTable(result)) {
 		goto error;
 	}
+	printf("Build 导入表: 成功\r\n");
 
 	// mark memory pages depending on section headers and release
 	// sections that are marked as "discardable"
 	if (!FinalizeSections(result)) {
 		goto error;
 	}
-
+	printf("Finalize Sections: 成功\r\n");
 	// TLS callbacks are executed BEFORE the main loading
 	if (!ExecuteTLS(result)) {
 		goto error;
 	}
-
+	printf("ExecuteTLS: 成功\r\n");
 	// get entry point of loaded library
 	if (result->headers->OptionalHeader.AddressOfEntryPoint != 0) {
 		if (result->isDLL) {
@@ -992,17 +1002,21 @@ HMEMORYMODULE MemoryLoadLibraryEx(const void *data, size_t size,
 			// notify library about attaching to process
 			BOOL successfull = (*DllEntry)((HINSTANCE)code, DLL_PROCESS_ATTACH, 0);
 			if (!successfull) {
+				printf("这是一个DLL文件存在DllMain 执行它后返回FALSE\r\n");
 				SetLastError(ERROR_DLL_INIT_FAILED);
 				goto error;
 			}
 			result->initialized = TRUE;
+			printf("这是一个DLL文件存在DllMain 执行它后返回TRUE\r\n");
 		}
 		else {
 			result->exeEntry = (ExeEntryProc)(LPVOID)(code + result->headers->OptionalHeader.AddressOfEntryPoint);
+			printf("这是一个EXE文件存在 入口点为:%p\r\n", result->exeEntry);
 		}
 	}
 	else {
 		result->exeEntry = NULL;
+		printf("这是一个EXE文件 入口点为空:0x00000000\r\n");
 	}
 
 	return (HMEMORYMODULE)result;
@@ -1173,9 +1187,11 @@ FARPROC MemoryGetProcAddress(HMEMORYMODULE mod, LPCSTR name)
 
 void MemoryFreeLibrary(HMEMORYMODULE mod)
 {
+	printf("~进入卸载被加载PE文件环节\r\n");
+
 	PMEMORYMODULE module = (PMEMORYMODULE)mod;
 	
-	//接触一次引用对该模块
+	//解除一次引用对该模块
 	MemoryFreePE_File(mod);
 
 	if (module == NULL) {
@@ -1189,6 +1205,7 @@ void MemoryFreeLibrary(HMEMORYMODULE mod)
 		}
 		return;
 	}
+	// 给DLL 发送卸载通知,方便其线程正常退出.
 	if (module->initialized) {
 		// notify library about detaching from process
 		DllEntryProc DllEntry = (DllEntryProc)(LPVOID)(module->codeBase + module->headers->OptionalHeader.AddressOfEntryPoint);
@@ -1219,7 +1236,7 @@ void MemoryFreeLibrary(HMEMORYMODULE mod)
 	HeapFree(GetProcessHeap(), 0, module);
 
 
-
+	printf("被加载文件的所有资源卸载: 完成.\r\n");
 	
 
 }

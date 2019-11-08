@@ -160,9 +160,9 @@ void* ReadLibrary(size_t* pSize, TCHAR* filePath) {
 
 void TestPEStruct(TCHAR* filePath)
 {
-	HMEMORYMODULE handle = MemoryLoadLibraryMainA(filePath,nullptr);
+	HMEMORYMODULE handle = MemoryLoadLibraryMainA(filePath, nullptr);
 
-	if (NULL==handle)
+	if (NULL == handle)
 	{
 		return;
 	}
@@ -247,7 +247,7 @@ HMEMORYMODULE QueryAddLoadLibraryName(char* filePath, void* data/*DLLÎÄ¼şÕ¼¾İµÄÄ
 		if (map_ModuleName2LoadModuleInfo.end() != iter)
 		{
 			iter->second.Reference_Number += 1;
-			
+
 			g_NOW_LOAD_MODULE_MODE = MEMORY_LOAD_MODE;
 
 			return iter->second.hd;
@@ -282,9 +282,11 @@ bool MemoryFreePE_File(HMEMORYMODULE hd)
 		std::map<std::string, st_file >::iterator iter = map_ModuleName2LoadModuleInfo.find(fileNameStr);
 		if (map_ModuleName2LoadModuleInfo.end() != iter)
 		{
-			
-			if (iter->second.Reference_Number > 1) 
-			{ iter->second.Reference_Number -= 1; }
+
+			if (iter->second.Reference_Number > 1)
+			{
+				iter->second.Reference_Number -= 1;
+			}
 			else
 			{//ÒıÓÃÊıÁ¿´ËÊ±ÎªÁã£¬È«²¿ÊÍ·Å×ÊÔ´
 				free(iter->second.data);
@@ -298,7 +300,7 @@ bool MemoryFreePE_File(HMEMORYMODULE hd)
 		else {
 			return false;
 		}
-		
+
 	}
 	else
 	{
@@ -321,7 +323,7 @@ void AddModuleHandle2LoadModuleInfo(HMEMORYMODULE hd, char* filePath)
 */
 bool HaveModuleHandleLoaded(HMEMORYMODULE hd)
 {
-	std::map<HMEMORYMODULE,std::string>::iterator iter = map_ModuleHandle2LoadModuleName.find(hd);
+	std::map<HMEMORYMODULE, std::string>::iterator iter = map_ModuleHandle2LoadModuleName.find(hd);
 
 	if (map_ModuleHandle2LoadModuleName.end() != iter)
 	{
@@ -338,11 +340,13 @@ bool HaveModuleHandleLoaded(HMEMORYMODULE hd)
 Ê§°ÜÔòÊ¹ÓÃ±¾µØ¼ÓÔØµÄ·½Ê½À´×ö:4
 
 ÒÉÎÊ?ÊÇ·ñ»á¶ÔXXÔì³ÉÓ°Ïì.
-- 
-- 
+-
+-
 
 */
-HMEMORYMODULE MemoryLoadLibraryMainA(char* filePath,void*)/*ÓÃÓÚÌæ´ú±ê×¼µÄLoadLibrary*/
+
+bool first_load = true;
+HMEMORYMODULE MemoryLoadLibraryMainA(char* filePath, void*)/*ÓÃÓÚÌæ´ú±ê×¼µÄLoadLibrary*/
 {
 	void *data;
 	size_t size;
@@ -379,7 +383,12 @@ HMEMORYMODULE MemoryLoadLibraryMainA(char* filePath,void*)/*ÓÃÓÚÌæ´ú±ê×¼µÄLoadLi
 		SetDllDirectoryA(fname);
 	}
 
-	// ³¢ÊÔÕı³£¼ÓÔØ
+
+	if (first_load)
+	{
+		first_load = false;
+	}
+	else//³¢ÊÔÕı³£¼ÓÔØ µÚÒ»¸öÄ£¿é Ò²¾ÍÊÇÎÒÃÇÒª·ÖÎöµÄÄ£¿é ĞèÒª×ÔĞĞ¼ÓÔØ,ÒòÎªÎÒÃÇÒªÏêÏ¸·ÖÎöÆä¸ñÊ½,·ÀÖ¹´íÎó
 	{
 		char fname[_MAX_FNAME];
 		char ext[_MAX_EXT];
@@ -395,6 +404,7 @@ HMEMORYMODULE MemoryLoadLibraryMainA(char* filePath,void*)/*ÓÃÓÚÌæ´ú±ê×¼µÄLoadLi
 			return hm;
 		}
 	}
+
 
 	data = ReadLibrary(&size, filePath);
 	if (data == NULL)
@@ -415,7 +425,7 @@ HMEMORYMODULE MemoryLoadLibraryMainA(char* filePath,void*)/*ÓÃÓÚÌæ´ú±ê×¼µÄLoadLi
 	ËùÒÔÓ¦¸Ã:
 	LoadLibrary()ÏÈ.
 	Èç¹û³É¹¦ÁË¾ÍÏÂÒ»²½
-	
+
 	*/
 	//²éÕÒÊÇ·ñÒÑ¾­¼ÓÔØ¸ÃÄ£¿é£¬Èç¹ûÃ»ÓĞÔò¼ÇÂ¼Ö®
 	HMEMORYMODULE  hd = QueryAddLoadLibraryName(filePath, data);
@@ -424,7 +434,7 @@ HMEMORYMODULE MemoryLoadLibraryMainA(char* filePath,void*)/*ÓÃÓÚÌæ´ú±ê×¼µÄLoadLi
 		return hd;//ÒÑ¾­¼ÓÔØ¹ı
 	}
 	;//Î´±»¼ÓÔØ¹ı£º¼ÌĞøÄ£Äâ¼ÓÔØ
-	
+
 
 
 
@@ -433,15 +443,15 @@ HMEMORYMODULE MemoryLoadLibraryMainA(char* filePath,void*)/*ÓÃÓÚÌæ´ú±ê×¼µÄLoadLi
 	handle = MemoryLoadLibrary(data, size);
 	if (handle == NULL)
 	{
-		OutputDebug(_T("Can't load library:%s ,from memory.\n"),filePath);
+		OutputDebug(_T("Can't load library:%s ,from memory.\n"), filePath);
 		//free(data);
 	}
-	else
-	{
-		MemoryCallEntryPoint(handle);//dllmain£¬Ö»»áÔÚµÚÒ»´Î±»µ÷ÓÃ¡£¡Ì
-	}
+
+
+	//MemoryCallEntryPoint(handle);//dllmain£¬Ö»»áÔÚµÚÒ»´Î±»µ÷ÓÃ¡£ Êµ¼ÊÉÏÔÚÇ°ÃæÒÑ¾­Ö´ĞĞÁËDllMainÁË...
+	//²Î¼û MemoryLoadLibraryEx
 	return handle;
-	
+
 }
 
 
@@ -727,22 +737,22 @@ int main(int argc, TCHAR** argv)
 	else
 	{
 		printf("Ê¹ÓÃ·½·¨ »áÔÚ¼ì²â³ö´íÎóÊ± ±¨¸æ¾ßÌåµÄ¼ì²â´úÂëÎ»ÖÃ,Í¨¹ı¶Ô±ÈÔ´ÂëÎÄ¼ş,¾ÍÖªµÀÊÇÊ²Ã´´íÎóÁË.\r\nÊäÈë -v ¿ÉÒÔ²é¿´±àÒëÊ±¼ä,ÒÔ±ãºÍÔ´Âë¶ÔÓ¦.");
-		printf("Please Input a file path used check...:\r\n");		
-		std::cin.getline(FilePathBuffer,MAX_PATH);
+		printf("Please Input a file path used check...:\r\n");
+		std::cin.getline(FilePathBuffer, MAX_PATH);
 
 		filePath = FilePathBuffer;
 	}
 	OutputDebug("*******************************************\r\n");
-	OutputDebug("Loading File...:\"%s\" \r\n",filePath);
+	OutputDebug("Loading File...:\"%s\" \r\n", filePath);
 	bool ret = LoadFromFile(filePath);
 
 	if (ret)
 	{
 		printf("Ê¹ÓÃÏµÍ³LoadLibrary³É¹¦¼ÓÔØ£¬ÍË³ö½øÒ»²½¼ì²âÇëÊäÈëq¡£System Loadlibrary have not error:)\r\n");
-		
+
 		OutputDebug("Ê¹ÓÃÏµÍ³LoadLibrary³É¹¦¼ÓÔØ,\r\nÍË³ö½øÒ»²½¼ì²âÇëÊäÈë \"q\"\r\n¼ÌĞø¼ì²âÇëÊäÈë ÈÎÒâ¼ü\r\n");
-		char a= getchar();
-		if(a=='q')
+		char a = getchar();
+		if (a == 'q')
 		{
 			return 2;
 		}
