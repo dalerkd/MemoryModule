@@ -17,9 +17,9 @@ Check EXE Why Error
 ![](xiao_guo_suc.png)
 
 
-[x86PE_Format_Ana.exe](https://github.com/dalerkd/PE_Format_Checker/raw/future/RecursiveCheckingError/Exe/x86PE_Format_Ana.zip)
+[适用于 x86 的 PE_Format_Ana.exe](https://github.com/dalerkd/PE_Format_Checker/raw/future/RecursiveCheckingError/Exe/x86PE_Format_Ana.zip)
 
-[x86PE_Format_Ana.exe](https://github.com/dalerkd/PE_Format_Checker/raw/future/RecursiveCheckingError/Exe/x64PE_Format_Ana.zip)
+[适用于 x64 PE_Format_Ana.exe](https://github.com/dalerkd/PE_Format_Checker/raw/future/RecursiveCheckingError/Exe/x64PE_Format_Ana.zip)
 
 
 
